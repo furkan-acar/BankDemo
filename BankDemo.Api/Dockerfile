@@ -37,6 +37,8 @@ COPY --from=build-env /app/BankDemo.Api/out .
 COPY --from=build-env /app/efbundle .
 
 COPY BankDemo.Api/entrypoint.sh .
+RUN sed -i 's/\r$//' /app/entrypoint.sh //the unix file format
+RUN ls -la /app
 RUN chmod +x entrypoint.sh
 
 EXPOSE 80
