@@ -490,4 +490,3 @@ $RECYCLE.BIN/
 *.db-shm
 *.db-wal
 # Migration files
-migrations/
