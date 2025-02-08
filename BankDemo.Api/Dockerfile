@@ -24,6 +24,7 @@ COPY BankDemo.SharedKernel/. ./BankDemo.SharedKernel/
 WORKDIR /app/BankDemo.Api
 RUN dotnet publish -c Release -o out
 
+
 #migration bundle
 WORKDIR /app
 ENV ConnectionStrings__DefaultConnection="Host=postgres;Database=BankDb;Username=postgres;Password=1741"
@@ -37,7 +38,7 @@ COPY --from=build-env /app/BankDemo.Api/out .
 COPY --from=build-env /app/efbundle .
 
 COPY BankDemo.Api/entrypoint.sh .
-RUN sed -i 's/\r$//' /app/entrypoint.sh //the unix file format
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 RUN ls -la /app
 RUN chmod +x entrypoint.sh
 
