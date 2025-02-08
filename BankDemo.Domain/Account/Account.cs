@@ -9,6 +9,9 @@ public class Account(string name, decimal balance) : IAggregateRoot
     public string Name { get; set; } = name;
     public decimal Balance { get; set; } = balance;
 
+    [Timestamp]
+    public uint Version { get; set; }
+
     public void Debit(decimal amount)
     {
         if (amount <= 0)
