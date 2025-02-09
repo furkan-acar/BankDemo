@@ -10,5 +10,6 @@ using BankDemo.Domain.Account;
            }
 
            public DbSet<Account> Accounts { get; set; } = null!;
+
        }
    }

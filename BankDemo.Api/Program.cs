@@ -60,6 +60,8 @@ builder.Services.AddExceptionHandler<AppExceptionHandler>();
 builder.Services.AddDbContext<BankDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+        //    .EnableSensitiveDataLogging()
+        //    .LogTo(Console.WriteLine, LogLevel.Debug);
 });
 
 builder.Services.AddScoped<BankDemo.Domain.Account.IAccountRepository, BankDemo.Infrastructure.Repositories.AccountRepository>();

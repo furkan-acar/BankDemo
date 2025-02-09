@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BankDemo.Infrastructure.Migrations
 {
     [DbContext(typeof(BankDbContext))]
-    [Migration("20250206010645_uintTest")]
-    partial class uintTest
+    [Migration("20250209160809_FirstInit")]
+    partial class FirstInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
