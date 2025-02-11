@@ -19,15 +19,16 @@ public class AccountRepository : IAccountRepository
         await _context.SaveChangesAsync();
     }
 
-        public async Task DeleteAsync(Account account)
-        {
-            _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
-        }
+    public async Task DeleteAsync(Account account)
+    {
+        _context.Accounts.Remove(account);
+        await _context.SaveChangesAsync();
+    }
 
     public async Task<Account?> GetByIdAsync(Guid id)
     {
-        return await _context.Accounts.FindAsync(id);
+        return await _context.Accounts
+            .FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<List<Account>> GetAllAsync()

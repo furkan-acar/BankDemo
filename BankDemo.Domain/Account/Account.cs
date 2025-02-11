@@ -12,8 +12,26 @@ public class Account(string name, decimal balance) : IAggregateRoot
     [Timestamp]
     public uint Version { get; set; }
 
-    public void Debit(decimal amount)
+    private void ValidateVersion(uint expectedVersion)
     {
+        if (Version != expectedVersion)
+            throw new AccountConcurrencyException(Id, expectedVersion, Version);
+    }
+
+    public void Update(string name, decimal balance, uint? expectedVersion = null)
+    {
+        if (expectedVersion.HasValue)
+            ValidateVersion(expectedVersion.Value);
+
+        Name = name;
+        Balance = balance;
+    }
+
+    public void Debit(decimal amount, uint? expectedVersion = null)
+    {
+        if (expectedVersion.HasValue)
+            ValidateVersion(expectedVersion.Value);
+
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
 
@@ -23,8 +41,11 @@ public class Account(string name, decimal balance) : IAggregateRoot
         Balance -= amount;
     }
 
-    public void Credit(decimal amount)
+    public void Credit(decimal amount, uint? expectedVersion = null)
     {
+        if (expectedVersion.HasValue)
+            ValidateVersion(expectedVersion.Value);
+
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
 
