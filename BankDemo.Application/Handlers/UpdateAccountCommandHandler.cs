@@ -20,17 +20,23 @@ public class UpdateAccountCommandHandler : IRequestHandler<UpdateAccountCommand,
         var account = await _accountRepository.GetByIdAsync(request.Id);
         if (account == null)
         {
-            throw new Exception("Account not found");
+            throw new AccountNotFoundException(request.Id);
         }
 
-        if (account.Version != request.Version)
+        try
         {
-            throw new DbUpdateConcurrencyException("The account has been modified by another user.");
+            account.Update(request.Name, request.Balance, request.Version);
+            await _accountRepository.UpdateAsync(account);
+            return account;
         }
-
-        account.Name = request.Name;
-        account.Balance = request.Balance;
-        await _accountRepository.UpdateAsync(account);
-        return account;
+        catch (DbUpdateConcurrencyException ex)
+        {
+            //to domain exception conversion
+            throw new AccountConcurrencyException(
+                request.Id,
+                request.Version ?? 0,
+                account.Version,
+                ex);
+        }
     }
 }

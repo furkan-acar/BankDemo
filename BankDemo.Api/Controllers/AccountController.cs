@@ -51,21 +51,54 @@ public class AccountController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Account>> GetById(Guid id)
     {
-        var query = new GetAccountByIdQuery(id);
-        var result = await _mediator.Send(query);
-        return Ok(result);
+        try
+        {
+            var query = new GetAccountByIdQuery(id);
+            var result = await _mediator.Send(query);
+            
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+        catch (AccountNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     /// <summary>
     /// Updates an existing bank account
     /// </summary>
+    /// <param name="id">Account ID</param>
     /// <param name="command">Account update details</param>
     /// <returns>The updated account</returns>
     [HttpPut("{id}")]
-    public async Task<ActionResult<Account>> Update([FromBody] UpdateAccountCommand command)
+    public async Task<ActionResult<Account>> Update(Guid id, [FromBody] UpdateAccountCommand command)
     {
-        var result = await _mediator.Send(command);
-        return Ok(result);
+        if (id != command.Id)
+        {
+            return BadRequest("ID mismatch");
+        }
+
+        try
+        {
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (AccountNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (AccountConcurrencyException ex)
+        {
+            return Conflict(new 
+            { 
+                message = ex.Message,
+                currentVersion = ex.ActualVersion,
+                providedVersion = ex.ExpectedVersion
+            });
+        }
     }
 
     /// <summary>
@@ -76,9 +109,16 @@ public class AccountController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<Account>> Delete(Guid id)
     {
-        var command = new DeleteAccountCommand(id);
-        var result = await _mediator.Send(command);
-        return Ok(result);
+        try
+        {
+            var command = new DeleteAccountCommand(id);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (AccountNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     #endregion
@@ -94,8 +134,24 @@ public class AccountController : ControllerBase
     [Tags("Transactions")]
     public async Task<ActionResult<Account>> Deposit([FromBody] DepositCommand command)
     {
-        var result = await _mediator.Send(command);
-        return Ok(result);
+        try
+        {
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (AccountNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (AccountConcurrencyException ex)
+        {
+            return Conflict(new 
+            { 
+                message = ex.Message,
+                currentVersion = ex.ActualVersion,
+                providedVersion = ex.ExpectedVersion
+            });
+        }
     }
 
     /// <summary>
@@ -107,12 +163,28 @@ public class AccountController : ControllerBase
     [Tags("Transactions")]
     public async Task<ActionResult<Account>> Transfer([FromBody] TransferCommand command)
     {
-        var result = await _mediator.Send(command);
-        if (result != null)
+        try
         {
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
-        return BadRequest();
+        catch (AccountNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (AccountConcurrencyException ex)
+        {
+            return Conflict(new 
+            { 
+                message = ex.Message,
+                currentVersion = ex.ActualVersion,
+                providedVersion = ex.ExpectedVersion
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     #endregion

@@ -8,6 +8,6 @@ namespace BankDemo.Application.Commands
         public Guid Id { get; set; }
         public required string Name { get; set; }
         public decimal Balance { get; set; }
-        public uint Version { get; set; }
+        public uint? Version { get; set; }
     }
 }
