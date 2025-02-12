@@ -3,6 +3,7 @@ using BankDemo.Domain.Account;
 using BankDemo.SharedKernel;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Serilog.Context;
 using System.Transactions;
 
@@ -28,7 +29,8 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Account?>
             {
                 return await ExecuteTransfer(request, attempt, cancellationToken);
             }
-            catch (AccountConcurrencyException ex)
+            // TODO: Update this catch block when implementing global exception handling
+            catch (TemporaryAccountConcurrencyException ex)
             {
                 if (attempt == MaxRetries - 1)
                 {
@@ -67,8 +69,16 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Account?>
         sourceAccount.Debit(request.Amount);
         destinationAccount.Credit(request.Amount);
 
-        await _accountRepository.UpdateAsync(sourceAccount);
-        await _accountRepository.UpdateAsync(destinationAccount);
+        try 
+        {
+            await _accountRepository.UpdateAsync(sourceAccount);
+            await _accountRepository.UpdateAsync(destinationAccount);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // TODO: Replace this with proper exception handling when implementing global exception system
+            throw new TemporaryAccountConcurrencyException("Concurrency conflict detected during transfer", ex);
+        }
 
         scope.Complete();
 
@@ -84,5 +94,15 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Account?>
         }
 
         return sourceAccount;
+    }
+
+    // TODO: Remove this temporary exception class when implementing global exception handling
+    // This is a temporary solution to maintain compatibility with existing code. Cherry picked from concurrency-token branch.
+    public class TemporaryAccountConcurrencyException : Exception
+    {
+        public TemporaryAccountConcurrencyException(string message, Exception innerException) 
+            : base(message, innerException)
+        {
+        }
     }
 }
